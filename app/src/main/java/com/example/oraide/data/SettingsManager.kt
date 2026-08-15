@@ -1,0 +1,130 @@
+package com.example.oraide.data
+
+import android.content.Context
+import android.content.SharedPreferences
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+class SettingsManager(context: Context) {
+    private val prefs: SharedPreferences = context.getSharedPreferences("oraide_settings", Context.MODE_PRIVATE)
+
+    // Default Colors (Greyish-blue aesthetic)
+    private val DEFAULT_BG_COLOR = "#1E2227"
+    private val DEFAULT_SIDEBAR_COLOR = "#21252B"
+    private val DEFAULT_ACTIVITY_BAR_COLOR = "#282C34"
+    private val DEFAULT_ACCENT_COLOR = "#61AFEF"
+
+    // Theme Colors
+    private val _backgroundColor = MutableStateFlow(prefs.getString("backgroundColor", DEFAULT_BG_COLOR) ?: DEFAULT_BG_COLOR)
+    val backgroundColor: StateFlow<String> = _backgroundColor.asStateFlow()
+
+    private val _sidebarColor = MutableStateFlow(prefs.getString("sidebarColor", DEFAULT_SIDEBAR_COLOR) ?: DEFAULT_SIDEBAR_COLOR)
+    val sidebarColor: StateFlow<String> = _sidebarColor.asStateFlow()
+
+    private val _activityBarColor = MutableStateFlow(prefs.getString("activityBarColor", DEFAULT_ACTIVITY_BAR_COLOR) ?: DEFAULT_ACTIVITY_BAR_COLOR)
+    val activityBarColor: StateFlow<String> = _activityBarColor.asStateFlow()
+
+    private val _accentColor = MutableStateFlow(prefs.getString("accentColor", DEFAULT_ACCENT_COLOR) ?: DEFAULT_ACCENT_COLOR)
+    val accentColor: StateFlow<String> = _accentColor.asStateFlow()
+
+    // Editor Settings
+    private val _autoIndent = MutableStateFlow(prefs.getBoolean("autoIndent", true))
+    val autoIndent: StateFlow<Boolean> = _autoIndent.asStateFlow()
+
+    private val _autoSave = MutableStateFlow(prefs.getBoolean("autoSave", true))
+    val autoSave: StateFlow<Boolean> = _autoSave.asStateFlow()
+
+    private val _autoCloseBrackets = MutableStateFlow(prefs.getBoolean("autoCloseBrackets", true))
+    val autoCloseBrackets: StateFlow<Boolean> = _autoCloseBrackets.asStateFlow()
+
+    private val _autoCloseQuotes = MutableStateFlow(prefs.getBoolean("autoCloseQuotes", true))
+    val autoCloseQuotes: StateFlow<Boolean> = _autoCloseQuotes.asStateFlow()
+
+    private val _wordWrap = MutableStateFlow(prefs.getBoolean("wordWrap", false))
+    val wordWrap: StateFlow<Boolean> = _wordWrap.asStateFlow()
+
+    private val _lineNumbers = MutableStateFlow(prefs.getBoolean("lineNumbers", true))
+    val lineNumbers: StateFlow<Boolean> = _lineNumbers.asStateFlow()
+
+    private val _highlightCurrentLine = MutableStateFlow(prefs.getBoolean("highlightCurrentLine", true))
+    val highlightCurrentLine: StateFlow<Boolean> = _highlightCurrentLine.asStateFlow()
+
+    fun updateBackgroundColor(hex: String) {
+        prefs.edit().putString("backgroundColor", hex).apply()
+        _backgroundColor.value = hex
+    }
+
+    fun updateSidebarColor(hex: String) {
+        prefs.edit().putString("sidebarColor", hex).apply()
+        _sidebarColor.value = hex
+    }
+
+    fun updateActivityBarColor(hex: String) {
+        prefs.edit().putString("activityBarColor", hex).apply()
+        _activityBarColor.value = hex
+    }
+
+    fun updateAccentColor(hex: String) {
+        prefs.edit().putString("accentColor", hex).apply()
+        _accentColor.value = hex
+    }
+
+    fun updateAutoIndent(enabled: Boolean) {
+        prefs.edit().putBoolean("autoIndent", enabled).apply()
+        _autoIndent.value = enabled
+    }
+
+    fun updateAutoSave(enabled: Boolean) {
+        prefs.edit().putBoolean("autoSave", enabled).apply()
+        _autoSave.value = enabled
+    }
+
+    fun updateAutoCloseBrackets(enabled: Boolean) {
+        prefs.edit().putBoolean("autoCloseBrackets", enabled).apply()
+        _autoCloseBrackets.value = enabled
+    }
+
+    fun updateAutoCloseQuotes(enabled: Boolean) {
+        prefs.edit().putBoolean("autoCloseQuotes", enabled).apply()
+        _autoCloseQuotes.value = enabled
+    }
+
+    fun updateWordWrap(enabled: Boolean) {
+        prefs.edit().putBoolean("wordWrap", enabled).apply()
+        _wordWrap.value = enabled
+    }
+
+    fun updateLineNumbers(enabled: Boolean) {
+        prefs.edit().putBoolean("lineNumbers", enabled).apply()
+        _lineNumbers.value = enabled
+    }
+
+    fun updateHighlightCurrentLine(enabled: Boolean) {
+        prefs.edit().putBoolean("highlightCurrentLine", enabled).apply()
+        _highlightCurrentLine.value = enabled
+    }
+
+    fun resetToDefaults() {
+        updateBackgroundColor(DEFAULT_BG_COLOR)
+        updateSidebarColor(DEFAULT_SIDEBAR_COLOR)
+        updateActivityBarColor(DEFAULT_ACTIVITY_BAR_COLOR)
+        updateAccentColor(DEFAULT_ACCENT_COLOR)
+        
+        updateAutoIndent(true)
+        updateAutoSave(true)
+        updateAutoCloseBrackets(true)
+        updateAutoCloseQuotes(true)
+        updateWordWrap(false)
+        updateLineNumbers(true)
+        updateHighlightCurrentLine(true)
+    }
+
+    private val _projectUri = MutableStateFlow(prefs.getString("projectUri", null))
+    val projectUri: StateFlow<String?> = _projectUri.asStateFlow()
+
+    fun updateProjectUri(uri: String?) {
+        prefs.edit().putString("projectUri", uri).apply()
+        _projectUri.value = uri
+    }
+}
