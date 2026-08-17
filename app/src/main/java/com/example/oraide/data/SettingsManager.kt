@@ -120,11 +120,46 @@ class SettingsManager(context: Context) {
         updateHighlightCurrentLine(true)
     }
 
-    private val _projectUri = MutableStateFlow(prefs.getString("projectUri", null))
-    val projectUri: StateFlow<String?> = _projectUri.asStateFlow()
+    private val _projectUris = MutableStateFlow(prefs.getStringSet("projectUris", setOf()) ?: setOf())
+    val projectUris: StateFlow<Set<String>> = _projectUris.asStateFlow()
 
-    fun updateProjectUri(uri: String?) {
-        prefs.edit().putString("projectUri", uri).apply()
-        _projectUri.value = uri
+    private val _activeProjectUri = MutableStateFlow(prefs.getString("activeProjectUri", prefs.getString("projectUri", null)))
+    val activeProjectUri: StateFlow<String?> = _activeProjectUri.asStateFlow()
+
+    init {
+        // Migrate old projectUri if present
+        val oldUri = prefs.getString("projectUri", null)
+        if (oldUri != null) {
+            if (!_projectUris.value.contains(oldUri)) {
+                val newSet = _projectUris.value.toMutableSet().apply { add(oldUri) }
+                prefs.edit().putStringSet("projectUris", newSet).apply()
+                _projectUris.value = newSet
+            }
+            if (prefs.getString("activeProjectUri", null) == null) {
+                setActiveProjectUri(oldUri)
+            }
+            prefs.edit().remove("projectUri").apply()
+        }
+    }
+
+    fun addProjectUri(uri: String) {
+        val newSet = _projectUris.value.toMutableSet().apply { add(uri) }
+        prefs.edit().putStringSet("projectUris", newSet).apply()
+        _projectUris.value = newSet
+        setActiveProjectUri(uri)
+    }
+
+    fun removeProjectUri(uri: String) {
+        val newSet = _projectUris.value.toMutableSet().apply { remove(uri) }
+        prefs.edit().putStringSet("projectUris", newSet).apply()
+        _projectUris.value = newSet
+        if (_activeProjectUri.value == uri) {
+            setActiveProjectUri(newSet.firstOrNull())
+        }
+    }
+
+    fun setActiveProjectUri(uri: String?) {
+        prefs.edit().putString("activeProjectUri", uri).apply()
+        _activeProjectUri.value = uri
     }
 }

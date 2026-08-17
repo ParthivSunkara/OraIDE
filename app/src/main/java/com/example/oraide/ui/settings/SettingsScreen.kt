@@ -30,6 +30,12 @@ fun SettingsScreen(
     val sidebarHex by settingsManager.sidebarColor.collectAsState()
     val activityBarHex by settingsManager.activityBarColor.collectAsState()
     val accentHex by settingsManager.accentColor.collectAsState()
+    var showAppInfo by remember { mutableStateOf(false) }
+
+    if (showAppInfo) {
+        AppInfoScreen(onBack = { showAppInfo = false })
+        return
+    }
 
     Column(
         modifier = modifier
@@ -73,10 +79,19 @@ fun SettingsScreen(
             Text("Reset to Defaults")
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { showAppInfo = true },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+        ) {
+            Text("App info")
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
         
         Text(
-            text = "Version 0.2.1",
+            text = "Version 0.2.2",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 12.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally)

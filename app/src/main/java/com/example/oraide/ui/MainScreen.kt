@@ -1,6 +1,9 @@
 package com.example.oraide.ui
 
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.compose.ui.unit.dp
 import com.example.oraide.data.SettingsManager
@@ -42,6 +46,11 @@ fun MainScreen(
     val tabs by editorViewModel.tabs.collectAsState()
     val activeTabIndex by editorViewModel.activeIndex.collectAsState()
     val activeTab = tabs.getOrNull(activeTabIndex)
+
+    val projectUris by settingsManager.projectUris.collectAsState()
+    val activeProjectUri by settingsManager.activeProjectUri.collectAsState()
+    var showProjectSwitcher by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
         TopBar(
@@ -78,6 +87,12 @@ fun MainScreen(
                         androidx.compose.material3.Button(onClick = onOpenProject) {
                             androidx.compose.material3.Text("Open / Create Project")
                         }
+                        if (projectUris.isNotEmpty()) {
+                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+                            androidx.compose.material3.Button(onClick = { showProjectSwitcher = true }) {
+                                androidx.compose.material3.Text("Switch Project")
+                            }
+                        }
                     }
                 } else {
                     val activeDirectory by explorerViewModel.activeDirectory.collectAsState()
@@ -99,14 +114,15 @@ fun MainScreen(
                         onNodeLongClicked = { node ->
                             selectedNodeForMenu = node
                         },
-                        onCreateFile = { name -> 
-                            explorerViewModel.createFile(name) { fileNode ->
+                        onCreateFile = { name, targetParent -> 
+                            explorerViewModel.createFile(name, targetParent) { fileNode ->
                                 if (fileNode != null && !fileNode.isDirectory) {
                                     editorViewModel.openFile(fileNode.file)
                                 }
                             }
                         },
-                        onCreateFolder = { name -> explorerViewModel.createFolder(name) }
+                        onCreateFolder = { name, targetParent -> explorerViewModel.createFolder(name, targetParent) },
+                        onSwitchProject = { showProjectSwitcher = true }
                     )
                     
                     if (selectedNodeForMenu != null) {
@@ -211,4 +227,87 @@ fun MainScreen(
             }
         }
     }
+
+    if (showProjectSwitcher) {
+        ProjectSwitcherDialog(
+            projectUris = projectUris,
+            currentProjectUri = activeProjectUri,
+            onProjectSelected = { uriString ->
+                settingsManager.setActiveProjectUri(uriString)
+                explorerViewModel.setWorkspaceRoot(uriString)
+                showProjectSwitcher = false
+            },
+            onProjectDeleted = { uriString ->
+                explorerViewModel.deleteProject(context, uriString, settingsManager)
+            },
+            onDismiss = { showProjectSwitcher = false }
+        )
+    }
+}
+
+@Composable
+fun ProjectSwitcherDialog(
+    projectUris: Set<String>,
+    currentProjectUri: String?,
+    onProjectSelected: (String) -> Unit,
+    onProjectDeleted: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var projectToDelete by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { androidx.compose.material3.Text("Projects") },
+        text = {
+            androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(projectUris.toList()) { uriString ->
+                    val name = android.net.Uri.parse(uriString).lastPathSegment ?: uriString
+                    val isCurrent = uriString == currentProjectUri
+                    Row(
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .background(if (isCurrent) androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f) else androidx.compose.ui.graphics.Color.Transparent)
+                            .clickable { onProjectSelected(uriString) }
+                            .padding(8.dp)
+                    ) {
+                        androidx.compose.material3.Text(
+                            text = name,
+                            modifier = Modifier.weight(1f),
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                        )
+                        androidx.compose.material3.IconButton(
+                            onClick = { projectToDelete = uriString },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            com.example.oraide.ui.components.AppIconView(
+                                icon = com.example.oraide.ui.components.AppIcon.CLOSE, 
+                                contentDescription = "Delete Project", 
+                                tint = androidx.compose.material3.MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+            
+            if (projectToDelete != null) {
+                com.example.oraide.ui.explorer.ConfirmDialog(
+                    title = "Delete Project",
+                    message = "Are you sure you want to delete this project? All files and folders inside will be permanently deleted.",
+                    onConfirm = {
+                        onProjectDeleted(projectToDelete!!)
+                        projectToDelete = null
+                    },
+                    onDismiss = { projectToDelete = null }
+                )
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) {
+                androidx.compose.material3.Text("Close")
+            }
+        }
+    )
 }

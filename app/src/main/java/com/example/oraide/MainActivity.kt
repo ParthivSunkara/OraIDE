@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
                 uri,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             )
-            settingsManager.updateProjectUri(uri.toString())
+            settingsManager.addProjectUri(uri.toString())
             repository.setWorkspaceRoot(uri.toString())
             explorerViewModel.loadProject()
         }
@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
         val editorViewModel = EditorViewModel(repository, settingsManager)
 
         // Initialize from Settings
-        val savedUri = settingsManager.projectUri.value
+        val savedUri = settingsManager.activeProjectUri.value
         if (savedUri != null) {
             try {
                 repository.setWorkspaceRoot(savedUri)

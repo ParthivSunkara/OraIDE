@@ -19,6 +19,29 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
     val projectName: String
         get() = repository.getWorkspaceRoot()?.name ?: "No Project"
 
+    fun setWorkspaceRoot(uriString: String) {
+        repository.setWorkspaceRoot(uriString)
+        loadProject()
+    }
+
+    fun deleteProject(context: android.content.Context, uriString: String, settingsManager: com.example.oraide.data.SettingsManager) {
+        viewModelScope.launch {
+            val uri = android.net.Uri.parse(uriString)
+            val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, uri)
+            if (docFile != null && docFile.exists()) {
+                docFile.delete()
+            }
+            settingsManager.removeProjectUri(uriString)
+            if (settingsManager.activeProjectUri.value == null) {
+                // The active project was deleted and settingsManager cleared it.
+                // Reset the repository workspace.
+                // SafFileRepository expects a URI, so we just clear our state.
+                _fileTree.value = emptyList()
+                _activeDirectory.value = null
+            }
+        }
+    }
+
     fun loadProject() {
         viewModelScope.launch {
             val root = repository.getWorkspaceRoot()
@@ -70,14 +93,14 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
         }
     }
     
-    fun createFile(name: String, onComplete: (FileNode?) -> Unit) {
+    fun createFile(name: String, targetParent: FileNode?, onComplete: (FileNode?) -> Unit) {
         viewModelScope.launch {
-            val parent = _activeDirectory.value?.file ?: repository.getWorkspaceRoot()
+            val parent = targetParent?.file ?: repository.getWorkspaceRoot()
             if (parent != null) {
                 val newFile = repository.createFile(parent, name)
                 if (newFile != null) {
                     val newNode = FileNode(newFile)
-                    reloadSpecificDirectory(_activeDirectory.value)
+                    reloadSpecificDirectory(targetParent)
                     onComplete(newNode)
                 } else {
                     onComplete(null)
@@ -88,12 +111,12 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
         }
     }
     
-    fun createFolder(name: String) {
+    fun createFolder(name: String, targetParent: FileNode?) {
         viewModelScope.launch {
-            val parent = _activeDirectory.value?.file ?: repository.getWorkspaceRoot()
+            val parent = targetParent?.file ?: repository.getWorkspaceRoot()
             if (parent != null) {
                 repository.createFolder(parent, name)
-                reloadSpecificDirectory(_activeDirectory.value)
+                reloadSpecificDirectory(targetParent)
             }
         }
     }

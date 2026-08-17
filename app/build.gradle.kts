@@ -7,12 +7,13 @@ plugins {
 android {
     namespace = "com.example.oraide"
     compileSdk = 36
+
     defaultConfig {
         applicationId = "com.example.oraide"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 4
+        versionName = "0.2.2"
     }
 
     buildTypes {

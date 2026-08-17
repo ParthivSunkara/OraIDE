@@ -3,6 +3,7 @@ package com.example.oraide.ui.explorer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,12 +24,15 @@ fun FileExplorer(
     activeDirectory: FileNode?,
     onNodeClicked: (FileNode) -> Unit,
     onNodeLongClicked: (FileNode) -> Unit,
-    onCreateFile: (String) -> Unit,
-    onCreateFolder: (String) -> Unit,
+    onCreateFile: (String, FileNode?) -> Unit,
+    onCreateFolder: (String, FileNode?) -> Unit,
+    onSwitchProject: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showNewFileDialog by remember { mutableStateOf(false) }
-    var showNewFolderDialog by remember { mutableStateOf(false) }
+    var isNewFileDialogOpen by remember { mutableStateOf(false) }
+    var newFileDialogTarget by remember { mutableStateOf<FileNode?>(null) }
+    var isNewFolderDialogOpen by remember { mutableStateOf(false) }
+    var newFolderDialogTarget by remember { mutableStateOf<FileNode?>(null) }
 
     Column(
         modifier = modifier
@@ -52,7 +56,7 @@ fun FileExplorer(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f).clickable { onSwitchProject() }) {
                 AppIconView(
                     icon = AppIcon.FOLDER_OPEN,
                     contentDescription = null,
@@ -69,10 +73,10 @@ fun FileExplorer(
             }
             
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { showNewFileDialog = true }, modifier = Modifier.size(24.dp)) {
+                IconButton(onClick = { newFileDialogTarget = null; isNewFileDialogOpen = true }, modifier = Modifier.size(24.dp)) {
                     AppIconView(icon = AppIcon.NEW_FILE, contentDescription = "New File", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 }
-                IconButton(onClick = { showNewFolderDialog = true }, modifier = Modifier.size(24.dp)) {
+                IconButton(onClick = { newFolderDialogTarget = null; isNewFolderDialogOpen = true }, modifier = Modifier.size(24.dp)) {
                     AppIconView(icon = AppIcon.NEW_FOLDER, contentDescription = "New Folder", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 }
             }
@@ -87,31 +91,33 @@ fun FileExplorer(
                     isActive = node == activeDirectory,
                     level = calculateDepth(node, fileTree), 
                     onClick = { onNodeClicked(node) },
-                    onLongClick = { onNodeLongClicked(node) }
+                    onLongClick = { onNodeLongClicked(node) },
+                    onNewFile = { newFileDialogTarget = node; isNewFileDialogOpen = true },
+                    onNewFolder = { newFolderDialogTarget = node; isNewFolderDialogOpen = true }
                 )
             }
         }
     }
 
-    if (showNewFileDialog) {
+    if (isNewFileDialogOpen) {
         InputDialog(
             title = "New File",
             onConfirm = { 
-                onCreateFile(it)
-                showNewFileDialog = false
+                onCreateFile(it, newFileDialogTarget)
+                isNewFileDialogOpen = false
             },
-            onDismiss = { showNewFileDialog = false }
+            onDismiss = { isNewFileDialogOpen = false }
         )
     }
 
-    if (showNewFolderDialog) {
+    if (isNewFolderDialogOpen) {
         InputDialog(
             title = "New Folder",
             onConfirm = { 
-                onCreateFolder(it)
-                showNewFolderDialog = false
+                onCreateFolder(it, newFolderDialogTarget)
+                isNewFolderDialogOpen = false
             },
-            onDismiss = { showNewFolderDialog = false }
+            onDismiss = { isNewFolderDialogOpen = false }
         )
     }
 }
@@ -136,7 +142,9 @@ fun FileNodeItem(
     isActive: Boolean,
     level: Int,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    onNewFile: () -> Unit = {},
+    onNewFolder: () -> Unit = {}
 ) {
     val bgColor = if (isActive) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
 
@@ -177,7 +185,18 @@ fun FileNodeItem(
         Text(
             text = node.name,
             color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 13.sp
+            fontSize = 13.sp,
+            modifier = Modifier.weight(1f)
         )
+        if (node.isDirectory) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onNewFile, modifier = Modifier.size(24.dp)) {
+                    AppIconView(icon = AppIcon.NEW_FILE, contentDescription = "New File", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                }
+                IconButton(onClick = onNewFolder, modifier = Modifier.size(24.dp)) {
+                    AppIconView(icon = AppIcon.NEW_FOLDER, contentDescription = "New Folder", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                }
+            }
+        }
     }
 }
