@@ -9,6 +9,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.Text
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Arrangement
 import com.example.oraide.ui.ActivityBarItem
 
 @Composable
@@ -19,7 +24,7 @@ fun ActivityBar(
     Column(
         modifier = Modifier
             .fillMaxHeight()
-            .width(48.dp)
+            .width(72.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -27,21 +32,37 @@ fun ActivityBar(
 
         ActivityBarIcon(
             icon = AppIcon.EXPLORER,
+            label = "Explorer",
             isSelected = activeItem == ActivityBarItem.EXPLORER,
             onClick = { onItemSelected(ActivityBarItem.EXPLORER) }
         )
         ActivityBarIcon(
             icon = AppIcon.SEARCH,
+            label = "Search",
             isSelected = activeItem == ActivityBarItem.SEARCH,
             onClick = { onItemSelected(ActivityBarItem.SEARCH) }
         )
         ActivityBarIcon(
-            icon = AppIcon.GIT, // Placeholder for Git
+            icon = AppIcon.GIT,
+            label = "Git",
             isSelected = activeItem == ActivityBarItem.GIT,
             onClick = { onItemSelected(ActivityBarItem.GIT) }
         )
         ActivityBarIcon(
-            icon = AppIcon.EXTENSIONS, // Placeholder for Extensions
+            icon = AppIcon.RUN,
+            label = "Run",
+            isSelected = activeItem == ActivityBarItem.RUN,
+            onClick = { onItemSelected(ActivityBarItem.RUN) }
+        )
+        ActivityBarIcon(
+            icon = AppIcon.TERMINAL,
+            label = "Terminal",
+            isSelected = activeItem == ActivityBarItem.TERMINAL,
+            onClick = { onItemSelected(ActivityBarItem.TERMINAL) }
+        )
+        ActivityBarIcon(
+            icon = AppIcon.EXTENSIONS,
+            label = "Extensions",
             isSelected = activeItem == ActivityBarItem.EXTENSIONS,
             onClick = { onItemSelected(ActivityBarItem.EXTENSIONS) }
         )
@@ -50,6 +71,7 @@ fun ActivityBar(
 
         ActivityBarIcon(
             icon = AppIcon.SETTINGS,
+            label = "Settings",
             isSelected = activeItem == ActivityBarItem.SETTINGS,
             onClick = { onItemSelected(ActivityBarItem.SETTINGS) }
         )
@@ -60,30 +82,40 @@ fun ActivityBar(
 @Composable
 fun ActivityBarIcon(
     icon: AppIcon,
+    label: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val bgColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent
+    val contentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
-            .clickable { onClick() },
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(bgColor)
+            .clickable { onClick() }
+            .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
-        if (isSelected) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(2.dp)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .align(Alignment.CenterStart)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            AppIconView(
+                icon = icon,
+                contentDescription = label,
+                tint = contentColor,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                color = contentColor,
+                fontSize = 10.sp,
+                maxLines = 1
             )
         }
-        AppIconView(
-            icon = icon,
-            contentDescription = null,
-            tint = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp)
-        )
     }
 }

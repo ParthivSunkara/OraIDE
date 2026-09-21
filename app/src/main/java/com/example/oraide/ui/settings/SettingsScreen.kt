@@ -91,7 +91,7 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(32.dp))
         
         Text(
-            text = "Version 0.2.2",
+            text = "Version 0.3.0",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 12.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally)

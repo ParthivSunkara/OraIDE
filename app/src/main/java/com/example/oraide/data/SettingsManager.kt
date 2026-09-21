@@ -10,10 +10,10 @@ class SettingsManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("oraide_settings", Context.MODE_PRIVATE)
 
     // Default Colors (Greyish-blue aesthetic)
-    private val DEFAULT_BG_COLOR = "#1E2227"
-    private val DEFAULT_SIDEBAR_COLOR = "#21252B"
-    private val DEFAULT_ACTIVITY_BAR_COLOR = "#282C34"
-    private val DEFAULT_ACCENT_COLOR = "#61AFEF"
+    private val DEFAULT_BG_COLOR = "#0D1117"
+    private val DEFAULT_SIDEBAR_COLOR = "#11161D"
+    private val DEFAULT_ACTIVITY_BAR_COLOR = "#151B23"
+    private val DEFAULT_ACCENT_COLOR = "#4FC3F7"
 
     // Theme Colors
     private val _backgroundColor = MutableStateFlow(prefs.getString("backgroundColor", DEFAULT_BG_COLOR) ?: DEFAULT_BG_COLOR)
@@ -49,6 +49,9 @@ class SettingsManager(context: Context) {
 
     private val _highlightCurrentLine = MutableStateFlow(prefs.getBoolean("highlightCurrentLine", true))
     val highlightCurrentLine: StateFlow<Boolean> = _highlightCurrentLine.asStateFlow()
+
+    private val _uiScale = MutableStateFlow(prefs.getFloat("uiScale", 1.0f))
+    val uiScale: StateFlow<Float> = _uiScale.asStateFlow()
 
     fun updateBackgroundColor(hex: String) {
         prefs.edit().putString("backgroundColor", hex).apply()
@@ -105,6 +108,12 @@ class SettingsManager(context: Context) {
         _highlightCurrentLine.value = enabled
     }
 
+    fun updateUiScale(scale: Float) {
+        val safeScale = scale.coerceIn(0.5f, 2.0f)
+        prefs.edit().putFloat("uiScale", safeScale).apply()
+        _uiScale.value = safeScale
+    }
+
     fun resetToDefaults() {
         updateBackgroundColor(DEFAULT_BG_COLOR)
         updateSidebarColor(DEFAULT_SIDEBAR_COLOR)
@@ -118,6 +127,7 @@ class SettingsManager(context: Context) {
         updateWordWrap(false)
         updateLineNumbers(true)
         updateHighlightCurrentLine(true)
+        updateUiScale(1.0f)
     }
 
     private val _projectUris = MutableStateFlow(prefs.getStringSet("projectUris", setOf()) ?: setOf())

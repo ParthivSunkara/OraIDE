@@ -21,17 +21,19 @@ fun OraIDETheme(
     settingsManager: SettingsManager?,
     content: @Composable () -> Unit,
 ) {
-    val bgHex by settingsManager?.backgroundColor?.collectAsState() ?: androidx.compose.runtime.mutableStateOf("#1E2227")
-    val sidebarHex by settingsManager?.sidebarColor?.collectAsState() ?: androidx.compose.runtime.mutableStateOf("#21252B")
-    val activityBarHex by settingsManager?.activityBarColor?.collectAsState() ?: androidx.compose.runtime.mutableStateOf("#282C34")
-    val accentHex by settingsManager?.accentColor?.collectAsState() ?: androidx.compose.runtime.mutableStateOf("#61AFEF")
+    val bgHex by settingsManager?.backgroundColor?.collectAsState() ?: androidx.compose.runtime.mutableStateOf("#0D1117")
+    val sidebarHex by settingsManager?.sidebarColor?.collectAsState() ?: androidx.compose.runtime.mutableStateOf("#11161D")
+    val activityBarHex by settingsManager?.activityBarColor?.collectAsState() ?: androidx.compose.runtime.mutableStateOf("#151B23")
+    val accentHex by settingsManager?.accentColor?.collectAsState() ?: androidx.compose.runtime.mutableStateOf("#4FC3F7")
 
     // The code editor background remains opaque for readability
-    val background = parseColor(bgHex, Color(0xFF1E2227))
+    val background = parseColor(bgHex, Color(0xFF0D1117))
     // Add transparency to panels
-    val surface = parseColor(sidebarHex, Color(0xFF21252B)).copy(alpha = 0.85f)
-    val surfaceVariant = parseColor(activityBarHex, Color(0xFF282C34)).copy(alpha = 0.85f)
-    val accent = parseColor(accentHex, Color(0xFF61AFEF))
+    val surface = parseColor(sidebarHex, Color(0xFF11161D)).copy(alpha = 0.85f)
+    val surfaceVariant = parseColor(activityBarHex, Color(0xFF151B23)).copy(alpha = 0.85f)
+    val accent = parseColor(accentHex, Color(0xFF4FC3F7))
+
+    val uiScale by settingsManager?.uiScale?.collectAsState() ?: androidx.compose.runtime.mutableStateOf(1.0f)
 
     val colorScheme = darkColorScheme(
         primary = accent,
@@ -52,6 +54,13 @@ fun OraIDETheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
-        content = content
-    )
+    ) {
+        val currentDensity = androidx.compose.ui.platform.LocalDensity.current
+        val scaledDensity = androidx.compose.ui.unit.Density(currentDensity.density * uiScale, currentDensity.fontScale * uiScale)
+        androidx.compose.runtime.CompositionLocalProvider(
+            androidx.compose.ui.platform.LocalDensity provides scaledDensity
+        ) {
+            content()
+        }
+    }
 }

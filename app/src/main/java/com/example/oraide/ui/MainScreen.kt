@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
@@ -22,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import com.example.oraide.data.SettingsManager
 import com.example.oraide.ui.components.ActivityBar
 import com.example.oraide.ui.components.BottomPanel
-import com.example.oraide.ui.components.TopBar
 import com.example.oraide.ui.editor.EditorArea
 import com.example.oraide.ui.editor.EditorViewModel
 import com.example.oraide.ui.explorer.FileExplorer
@@ -34,6 +34,7 @@ fun MainScreen(
     mainViewModel: MainViewModel,
     explorerViewModel: FileExplorerViewModel,
     editorViewModel: EditorViewModel,
+    searchViewModel: com.example.oraide.ui.search.SearchViewModel,
     settingsManager: SettingsManager,
     onOpenProject: () -> Unit = {}
 ) {
@@ -42,6 +43,7 @@ fun MainScreen(
     val isSearchActive by mainViewModel.isSearchActive.collectAsState()
     
     val fileTree by explorerViewModel.fileTree.collectAsState()
+    val projectName by explorerViewModel.projectName.collectAsState()
     
     val tabs by editorViewModel.tabs.collectAsState()
     val activeTabIndex by editorViewModel.activeIndex.collectAsState()
@@ -50,31 +52,65 @@ fun MainScreen(
     val projectUris by settingsManager.projectUris.collectAsState()
     val activeProjectUri by settingsManager.activeProjectUri.collectAsState()
     var showProjectSwitcher by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var showProjectMenu by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var showProjectRename by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var showProjectDelete by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
 
+    val saveAsLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("*/*")
+    ) { uri ->
+        if (uri != null && activeTab != null) {
+            val resolver = context.contentResolver
+            try {
+                resolver.openOutputStream(uri)?.use { output ->
+                    output.write(activeTab.content.text.toByteArray())
+                }
+                val docFile = androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)
+                if (docFile != null) {
+                    editorViewModel.updateTabFile(activeTab.file, docFile)
+                    editorViewModel.saveFile(activeTabIndex) // Clear dirty flag
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-        TopBar(
-            projectName = "OraIDE",
-            fileName = activeTab?.title ?: "",
+        com.example.oraide.ui.components.GlobalAppBar(
             onSaveClick = {
                 if (activeTabIndex != -1) {
                     editorViewModel.saveFile(activeTabIndex)
                 }
             },
+            onSaveAsClick = {
+                if (activeTab != null) {
+                    saveAsLauncher.launch(activeTab.file.name ?: "Untitled.txt")
+                }
+            },
             onSearchClick = {
                 mainViewModel.toggleSearch()
-            }
+            },
+            onCloseAllTabsClick = { editorViewModel.clearAllTabs() },
+            settingsManager = settingsManager
         )
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             // Left Activity Bar
             ActivityBar(
                 activeItem = activeSidebarItem,
-                onItemSelected = { mainViewModel.toggleSidebarItem(it) }
+                onItemSelected = { item ->
+                    if (item == ActivityBarItem.TERMINAL) {
+                        mainViewModel.setBottomPanelVisible(!isBottomPanelVisible)
+                    } else {
+                        mainViewModel.toggleSidebarItem(item)
+                    }
+                }
             )
 
             // Sidebar (Explorer or Settings)
             if (activeSidebarItem == ActivityBarItem.EXPLORER) {
-                if (explorerViewModel.projectName == "No Project") {
+                if (projectName == "No Project") {
                     Column(
                         modifier = Modifier
                             .fillMaxHeight()
@@ -102,7 +138,7 @@ fun MainScreen(
                     
                     FileExplorer(
                         fileTree = fileTree,
-                        projectName = explorerViewModel.projectName,
+                        projectName = projectName,
                         activeDirectory = activeDirectory,
                         onNodeClicked = { node ->
                             if (node.isDirectory) {
@@ -122,7 +158,7 @@ fun MainScreen(
                             }
                         },
                         onCreateFolder = { name, targetParent -> explorerViewModel.createFolder(name, targetParent) },
-                        onSwitchProject = { showProjectSwitcher = true }
+                        onProjectMenuClicked = { showProjectMenu = true }
                     )
                     
                     if (selectedNodeForMenu != null) {
@@ -191,21 +227,45 @@ fun MainScreen(
                         )
                     }
                 }
+            } else if (activeSidebarItem == ActivityBarItem.EXTENSIONS) {
+                Box(modifier = Modifier.fillMaxHeight().width(250.dp)) {
+                    com.example.oraide.ui.extensions.ExtensionsScreen()
+                }
+            } else if (activeSidebarItem == ActivityBarItem.SEARCH) {
+                Box(modifier = Modifier.fillMaxHeight().width(250.dp)) {
+                    com.example.oraide.ui.search.SearchSidePanel(
+                        searchViewModel = searchViewModel,
+                        activeFile = activeTab?.file,
+                        activeDirectory = explorerViewModel.activeDirectory.collectAsState().value,
+                        openTabsContent = tabs.associate { it.file.uri.toString() to it.content.text },
+                        onUpdateEditorTab = { file, newText ->
+                            editorViewModel.updateContentByFile(file, newText)
+                        },
+                        onResultClicked = { result ->
+                            searchViewModel.setSelectedMatch(result)
+                            editorViewModel.openFileAndSelect(result.file, result.matchStartIndex, result.matchEndIndex)
+                        },
+                        onClose = { mainViewModel.toggleSidebarItem(ActivityBarItem.EXPLORER) }
+                    )
+                }
             } else if (activeSidebarItem == ActivityBarItem.SETTINGS) {
                 SettingsScreen(
                     settingsManager = settingsManager,
-                    modifier = Modifier.weight(1f) // Takes up remaining space when open, or give it fixed width?
-                    // Wait, ActivityBar controls a sidebar, but Settings is usually a full tab or full editor area. 
-                    // Let's just make Settings take up the whole remaining width for simplicity in V0.2, OR make it a sidebar and EditorArea next to it.
-                    // SettingsScreen is currently written to take fillMaxSize. So we can put it in the "EditorArea" spot or "Sidebar" spot.
-                    // Let's replace the whole remaining area if Settings is selected.
+                    modifier = Modifier.weight(1f)
                 )
             }
             
-            // Editor & Bottom Panel Area (Only show if not settings, or keep settings in sidebar?)
-            // OraIDE shows Settings as a tab. We can just show it instead of the EditorArea.
+            // Editor & Bottom Panel Area
             if (activeSidebarItem != ActivityBarItem.SETTINGS) {
                 Column(modifier = Modifier.weight(1f).fillMaxSize()) {
+                    val globalSearchQuery by searchViewModel.searchQuery.collectAsState()
+                    val globalSelectedMatch by searchViewModel.selectedMatch.collectAsState()
+                    val globalMatchRange = globalSelectedMatch?.let {
+                        if (it.file.uri == activeTab?.file?.uri) {
+                            IntRange(it.matchStartIndex, it.matchEndIndex - 1)
+                        } else null
+                    }
+                    
                     EditorArea(
                         tabs = tabs,
                         activeIndex = activeTabIndex,
@@ -215,17 +275,94 @@ fun MainScreen(
                         isSearchActive = isSearchActive,
                         onSearchClosed = { mainViewModel.setSearchActive(false) },
                         settingsManager = settingsManager,
+                        globalSearchQuery = globalSearchQuery,
+                        globalSelectedMatchRange = globalMatchRange,
                         modifier = Modifier.weight(1f)
                     )
                     
                     if (isBottomPanelVisible) {
                         BottomPanel(
+                            activeProjectUri = activeProjectUri,
                             onClose = { mainViewModel.setBottomPanelVisible(false) }
                         )
                     }
                 }
             }
         }
+        com.example.oraide.ui.components.StatusBar(projectName = projectName)
+    }
+
+    if (showProjectMenu) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showProjectMenu = false },
+            title = { androidx.compose.material3.Text("Project Options") },
+            text = {
+                Column {
+                    androidx.compose.material3.TextButton(
+                        onClick = { showProjectSwitcher = true; showProjectMenu = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { androidx.compose.material3.Text("Switch Project") }
+                    androidx.compose.material3.TextButton(
+                        onClick = { onOpenProject(); showProjectMenu = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { androidx.compose.material3.Text("New Project") }
+                    androidx.compose.material3.TextButton(
+                        onClick = { showProjectRename = true; showProjectMenu = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { androidx.compose.material3.Text("Rename Project") }
+                    androidx.compose.material3.TextButton(
+                        onClick = { showProjectDelete = true; showProjectMenu = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { androidx.compose.material3.Text("Delete Project") }
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { showProjectMenu = false }) {
+                    androidx.compose.material3.Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showProjectRename) {
+        com.example.oraide.ui.explorer.InputDialog(
+            title = "Rename Project",
+            initialText = projectName,
+            onConfirm = { newName ->
+                val uriStr = activeProjectUri
+                if (uriStr != null) {
+                    val oldPerms = context.contentResolver.persistedUriPermissions.map { it.uri.toString() }.toSet()
+                    val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, android.net.Uri.parse(uriStr))
+                    if (docFile != null && docFile.exists()) {
+                        val success = docFile.renameTo(newName)
+                        if (!success) {
+                            android.widget.Toast.makeText(context, "Cannot rename this project directory due to Android storage restrictions.", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            editorViewModel.clearAllTabs()
+                            explorerViewModel.loadProject()
+                        }
+                    }
+                }
+                showProjectRename = false
+            },
+            onDismiss = { showProjectRename = false }
+        )
+    }
+
+    if (showProjectDelete) {
+        com.example.oraide.ui.explorer.ConfirmDialog(
+            title = "Delete Project",
+            message = "Are you sure you want to delete this project? All files and folders inside will be permanently deleted.",
+            onConfirm = {
+                val uriStr = activeProjectUri
+                if (uriStr != null) {
+                    explorerViewModel.deleteProject(context, uriStr, settingsManager)
+                    editorViewModel.clearAllTabs()
+                }
+                showProjectDelete = false
+            },
+            onDismiss = { showProjectDelete = false }
+        )
     }
 
     if (showProjectSwitcher) {
@@ -233,11 +370,17 @@ fun MainScreen(
             projectUris = projectUris,
             currentProjectUri = activeProjectUri,
             onProjectSelected = { uriString ->
-                settingsManager.setActiveProjectUri(uriString)
-                explorerViewModel.setWorkspaceRoot(uriString)
+                if (activeProjectUri != uriString) {
+                    editorViewModel.clearAllTabs()
+                    settingsManager.setActiveProjectUri(uriString)
+                    explorerViewModel.setWorkspaceRoot(uriString)
+                }
                 showProjectSwitcher = false
             },
             onProjectDeleted = { uriString ->
+                if (activeProjectUri == uriString) {
+                    editorViewModel.clearAllTabs()
+                }
                 explorerViewModel.deleteProject(context, uriString, settingsManager)
             },
             onDismiss = { showProjectSwitcher = false }
@@ -255,13 +398,18 @@ fun ProjectSwitcherDialog(
 ) {
     var projectToDelete by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
     
+    val context = androidx.compose.ui.platform.LocalContext.current
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
         title = { androidx.compose.material3.Text("Projects") },
         text = {
             androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 items(projectUris.toList()) { uriString ->
-                    val name = android.net.Uri.parse(uriString).lastPathSegment ?: uriString
+                    val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, android.net.Uri.parse(uriString))
+                    val actualName = docFile?.name
+                    val fallbackRaw = android.net.Uri.parse(uriString).lastPathSegment ?: uriString
+                    val fallbackName = fallbackRaw.substringAfterLast(":")
+                    val name = actualName ?: fallbackName
                     val isCurrent = uriString == currentProjectUri
                     Row(
                         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,

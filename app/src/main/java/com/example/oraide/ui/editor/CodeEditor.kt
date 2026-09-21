@@ -23,8 +23,10 @@ fun CodeEditor(
     onContentChanged: (TextFieldValue) -> Unit,
     settingsManager: SettingsManager,
     isSearchActive: Boolean,
-    searchQuery: String,
+    searchQuery: String, // from local search panel
     onSearchClosed: () -> Unit,
+    globalSearchQuery: String = "",
+    globalSelectedMatchRange: IntRange? = null,
     modifier: Modifier = Modifier
 ) {
     val highlighter = remember { RegexSyntaxHighlighter() }
@@ -33,13 +35,21 @@ fun CodeEditor(
     var localSearchQuery by remember { mutableStateOf(searchQuery) }
     var currentMatchIndex by remember { mutableStateOf(0) }
     
+    val effectiveSearchQuery = if (isSearchActive) localSearchQuery else globalSearchQuery
+    
     val matches = remember(content.text, localSearchQuery) {
         if (localSearchQuery.isEmpty()) emptyList()
         else Regex.escape(localSearchQuery).toRegex(RegexOption.IGNORE_CASE).findAll(content.text).toList()
     }
     
-    val visualTransformation = remember(highlighter, localSearchQuery, currentMatchIndex) { 
-        SyntaxVisualTransformation(highlighter, localSearchQuery, currentMatchIndex) 
+    val visualTransformation = remember(highlighter, effectiveSearchQuery, isSearchActive, currentMatchIndex, globalSelectedMatchRange) { 
+        if (isSearchActive) {
+            // For local search, map currentMatchIndex to an IntRange
+            val range = matches.getOrNull(currentMatchIndex)?.range
+            SyntaxVisualTransformation(highlighter, effectiveSearchQuery, range) 
+        } else {
+            SyntaxVisualTransformation(highlighter, effectiveSearchQuery, globalSelectedMatchRange)
+        }
     }
     
     val textStyle = TextStyle(

@@ -12,6 +12,7 @@ enum class AppIcon {
     EXPLORER,
     SEARCH,
     GIT,
+    TERMINAL,
     EXTENSIONS,
     SETTINGS,
     CLOSE,
@@ -40,8 +41,9 @@ fun AppIconView(
     val imageVector: ImageVector = when (icon) {
         AppIcon.EXPLORER -> Icons.Rounded.Folder
         AppIcon.SEARCH -> Icons.Rounded.Search
-        AppIcon.GIT -> Icons.Rounded.Create // Placeholder
-        AppIcon.EXTENSIONS -> Icons.Rounded.Build // Placeholder
+        AppIcon.GIT -> Icons.Rounded.Share
+        AppIcon.TERMINAL -> Icons.Rounded.Terminal
+        AppIcon.EXTENSIONS -> Icons.Rounded.Extension
         AppIcon.SETTINGS -> Icons.Rounded.Settings
         AppIcon.CLOSE -> Icons.Rounded.Close
         AppIcon.SAVE -> Icons.Rounded.Save
@@ -53,7 +55,7 @@ fun AppIconView(
         AppIcon.CHEVRON_RIGHT -> Icons.Rounded.KeyboardArrowRight
         AppIcon.FILE -> Icons.Rounded.Description
         AppIcon.NEW_FILE -> Icons.Rounded.Add
-        AppIcon.NEW_FOLDER -> Icons.Rounded.Add
+        AppIcon.NEW_FOLDER -> Icons.Rounded.CreateNewFolder
     }
 
     Icon(

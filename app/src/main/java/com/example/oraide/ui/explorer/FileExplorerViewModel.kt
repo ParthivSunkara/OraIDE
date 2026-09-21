@@ -16,8 +16,8 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
     private val _activeDirectory = MutableStateFlow<FileNode?>(null)
     val activeDirectory: StateFlow<FileNode?> = _activeDirectory.asStateFlow()
     
-    val projectName: String
-        get() = repository.getWorkspaceRoot()?.name ?: "No Project"
+    private val _projectName = MutableStateFlow("No Project")
+    val projectName: StateFlow<String> = _projectName.asStateFlow()
 
     fun setWorkspaceRoot(uriString: String) {
         repository.setWorkspaceRoot(uriString)
@@ -46,9 +46,12 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
         viewModelScope.launch {
             val root = repository.getWorkspaceRoot()
             if (root != null) {
+                val fallbackName = android.net.Uri.parse(root.uri.toString()).lastPathSegment?.substringAfterLast(":") ?: "Unknown Project"
+                _projectName.value = root.name ?: fallbackName
                 _fileTree.value = repository.getChildren(root)
                 _activeDirectory.value = null
             } else {
+                _projectName.value = "No Project"
                 _fileTree.value = emptyList()
                 _activeDirectory.value = null
             }
@@ -176,6 +179,8 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
         if (parent == null) {
             val root = repository.getWorkspaceRoot()
             if (root != null) {
+                val fallbackName = android.net.Uri.parse(root.uri.toString()).lastPathSegment?.substringAfterLast(":") ?: "Unknown Project"
+                _projectName.value = root.name ?: fallbackName
                 val newRootChildren = repository.getChildren(root)
                 _fileTree.value = buildFlatTree(newRootChildren)
             }
@@ -185,6 +190,8 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
             // Rebuild tree from root
             val root = repository.getWorkspaceRoot()
             if (root != null) {
+                val fallbackName = android.net.Uri.parse(root.uri.toString()).lastPathSegment?.substringAfterLast(":") ?: "Unknown Project"
+                _projectName.value = root.name ?: fallbackName
                 // Since we mutated parent.children, rebuilding the flat tree from the existing root nodes will pick up the new children.
                 // But we need the root nodes!
                 val rootNodes = _fileTree.value.filter { findParent(it, _fileTree.value) == null } 

@@ -26,7 +26,7 @@ fun FileExplorer(
     onNodeLongClicked: (FileNode) -> Unit,
     onCreateFile: (String, FileNode?) -> Unit,
     onCreateFolder: (String, FileNode?) -> Unit,
-    onSwitchProject: () -> Unit,
+    onProjectMenuClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isNewFileDialogOpen by remember { mutableStateOf(false) }
@@ -56,7 +56,7 @@ fun FileExplorer(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f).clickable { onSwitchProject() }) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f).clickable { onProjectMenuClicked() }) {
                 AppIconView(
                     icon = AppIcon.FOLDER_OPEN,
                     contentDescription = null,
@@ -82,7 +82,7 @@ fun FileExplorer(
             }
         }
         
-        Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f), thickness = 1.dp)
+        HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f), thickness = 1.dp)
 
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(fileTree, key = { it.path }) { node ->

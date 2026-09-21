@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.Color
 import com.example.oraide.theme.*
 
 interface SyntaxHighlighter {
-    fun highlight(text: String, searchQuery: String = "", currentMatchIndex: Int = -1): AnnotatedString
+    fun highlight(text: String, searchQuery: String = "", globalSelectedMatchRange: IntRange? = null): AnnotatedString
 }
 
 class RegexSyntaxHighlighter : SyntaxHighlighter {
@@ -31,7 +31,7 @@ class RegexSyntaxHighlighter : SyntaxHighlighter {
     private val numberRegex = "\\b\\d+\\b".toRegex()
     private val commentRegex = "//.*".toRegex()
 
-    override fun highlight(text: String, searchQuery: String, currentMatchIndex: Int): AnnotatedString {
+    override fun highlight(text: String, searchQuery: String, globalSelectedMatchRange: IntRange?): AnnotatedString {
         return buildAnnotatedString {
             append(text)
             
@@ -61,9 +61,9 @@ class RegexSyntaxHighlighter : SyntaxHighlighter {
             // Search Highlights
             if (searchQuery.isNotEmpty()) {
                 val matches = Regex.escape(searchQuery).toRegex(RegexOption.IGNORE_CASE).findAll(text).toList()
-                matches.forEachIndexed { index, match ->
-                    val isCurrent = index == currentMatchIndex
-                    val bgColor = if (isCurrent) Color(0xFFF6B93B) else Color(0x66F6B93B)
+                matches.forEach { match ->
+                    val isCurrent = globalSelectedMatchRange != null && match.range == globalSelectedMatchRange
+                    val bgColor = if (isCurrent) Color(0xFFFFD54F) else Color(0x66FFD54F)
                     val fgColor = if (isCurrent) Color.Black else Color.Unspecified
                     addStyle(SpanStyle(background = bgColor, color = fgColor), match.range.first, match.range.last + 1)
                 }
@@ -75,11 +75,11 @@ class RegexSyntaxHighlighter : SyntaxHighlighter {
 class SyntaxVisualTransformation(
     private val highlighter: SyntaxHighlighter,
     private val searchQuery: String = "",
-    private val currentMatchIndex: Int = -1
+    private val globalSelectedMatchRange: IntRange? = null
 ) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         return TransformedText(
-            highlighter.highlight(text.text, searchQuery, currentMatchIndex),
+            highlighter.highlight(text.text, searchQuery, globalSelectedMatchRange),
             OffsetMapping.Identity
         )
     }

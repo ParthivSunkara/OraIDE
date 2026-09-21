@@ -29,24 +29,43 @@ fun TabBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(MaterialTheme.colorScheme.surfaceVariant) // Tab bar background
+            .padding(top = 4.dp, start = 4.dp, end = 4.dp)
     ) {
         itemsIndexed(tabs) { index, tab ->
             val isActive = index == activeIndex
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
+                    .padding(end = 2.dp) // Space between tabs
                     .fillMaxHeight()
-                    .background(if (isActive) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                    .background(if (isActive) MaterialTheme.colorScheme.background else Color.Transparent)
                     .clickable { onTabSelected(index) }
                     .padding(horizontal = 16.dp)
             ) {
+                AppIconView(
+                    icon = AppIcon.FILE,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = tab.title,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.width(8.dp))
+                if (tab.isDirty) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant, shape = androidx.compose.foundation.shape.CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                
                 AppIconView(
                     icon = AppIcon.CLOSE,
                     contentDescription = "Close Tab",
@@ -56,12 +75,6 @@ fun TabBar(
                         .clip(RoundedCornerShape(4.dp))
                         .clickable { onTabClosed(index) }
                 )
-            }
-            if (!isActive) {
-                Box(modifier = Modifier
-                    .fillMaxHeight()
-                    .width(1.dp)
-                    .background(Color.Black.copy(alpha = 0.2f)))
             }
         }
     }

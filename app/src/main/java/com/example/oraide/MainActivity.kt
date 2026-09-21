@@ -47,6 +47,8 @@ class MainActivity : ComponentActivity() {
         explorerViewModel = FileExplorerViewModel(repository)
         val editorViewModel = EditorViewModel(repository, settingsManager)
 
+        val searchViewModel = com.example.oraide.ui.search.SearchViewModel(repository)
+
         // Initialize from Settings
         val savedUri = settingsManager.activeProjectUri.value
         if (savedUri != null) {
@@ -68,6 +70,7 @@ class MainActivity : ComponentActivity() {
                         mainViewModel = mainViewModel,
                         explorerViewModel = explorerViewModel,
                         editorViewModel = editorViewModel,
+                        searchViewModel = searchViewModel,
                         settingsManager = settingsManager,
                         onOpenProject = { openDocumentTreeLauncher.launch(null) }
                     )

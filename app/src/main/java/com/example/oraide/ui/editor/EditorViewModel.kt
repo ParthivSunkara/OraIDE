@@ -55,6 +55,27 @@ class EditorViewModel(
         }
     }
     
+    fun openFileAndSelect(file: DocumentFile, start: Int, end: Int) {
+        viewModelScope.launch {
+            val existingIndex = _tabs.value.indexOfFirst { it.file.uri == file.uri }
+            if (existingIndex != -1) {
+                _activeIndex.value = existingIndex
+                setSelection(existingIndex, start, end)
+            } else {
+                val content = repository.readFileContent(file)
+                val newTab = EditorTab(file, TextFieldValue(content, androidx.compose.ui.text.TextRange(start, end)))
+                val newList = _tabs.value + newTab
+                _tabs.value = newList
+                _activeIndex.value = newList.size - 1
+            }
+        }
+    }
+    
+    fun clearAllTabs() {
+        _tabs.value = emptyList()
+        _activeIndex.value = -1
+    }
+
     fun closeTabByFile(file: DocumentFile) {
         val existingIndex = _tabs.value.indexOfFirst { it.file.uri == file.uri }
         if (existingIndex != -1) {
@@ -108,6 +129,17 @@ class EditorViewModel(
         }
     }
 
+    fun updateContentByFile(file: DocumentFile, newText: String) {
+        val list = _tabs.value.toMutableList()
+        val index = list.indexOfFirst { it.file.uri == file.uri }
+        if (index != -1) {
+            val tab = list[index]
+            val newContent = androidx.compose.ui.text.input.TextFieldValue(newText)
+            list[index] = tab.copy(content = newContent, isDirty = true)
+            _tabs.value = list
+        }
+    }
+
     fun undo(index: Int) {
         val list = _tabs.value.toMutableList()
         if (index in list.indices) {
@@ -145,5 +177,14 @@ class EditorViewModel(
             }
         }
     }
-}
 
+    fun setSelection(index: Int, start: Int, end: Int) {
+        val list = _tabs.value.toMutableList()
+        if (index in list.indices) {
+            val tab = list[index]
+            val newContent = tab.content.copy(selection = androidx.compose.ui.text.TextRange(start, end))
+            list[index] = tab.copy(content = newContent)
+            _tabs.value = list
+        }
+    }
+}

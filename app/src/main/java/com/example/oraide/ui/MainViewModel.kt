@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 enum class ActivityBarItem {
-    EXPLORER, SEARCH, GIT, EXTENSIONS, SETTINGS
+    EXPLORER, SEARCH, GIT, RUN, TERMINAL, EXTENSIONS, SETTINGS
 }
 
 class MainViewModel : ViewModel() {

@@ -9,5 +9,5 @@ data class EditorTab(
     var isDirty: Boolean = false,
     val undoManager: UndoManager = UndoManager()
 ) {
-    val title: String get() = if (isDirty) "${file.name ?: "Unknown"} *" else file.name ?: "Unknown"
+    val title: String get() = file.name ?: "Unknown"
 }
