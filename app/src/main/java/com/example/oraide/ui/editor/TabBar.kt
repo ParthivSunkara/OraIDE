@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.oraide.ui.components.AppIcon
 import com.example.oraide.ui.components.AppIconView
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.isTertiaryPressed
 
 @Composable
 fun TabBar(
@@ -41,7 +44,24 @@ fun TabBar(
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                     .background(if (isActive) MaterialTheme.colorScheme.background else Color.Transparent)
-                    .clickable { onTabSelected(index) }
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                if (event.type == androidx.compose.ui.input.pointer.PointerEventType.Press) {
+                                    if (event.buttons.isTertiaryPressed) {
+                                        onTabClosed(index)
+                                        event.changes.forEach { it.consume() }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = { onTabSelected(index) }
+                        )
+                    }
                     .padding(horizontal = 16.dp)
             ) {
                 AppIconView(

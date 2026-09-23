@@ -25,7 +25,7 @@ fun CodeEditor(
     isSearchActive: Boolean,
     searchQuery: String, // from local search panel
     onSearchClosed: () -> Unit,
-    globalSearchQuery: String = "",
+    searchRegex: Regex? = null,
     globalSelectedMatchRange: IntRange? = null,
     modifier: Modifier = Modifier
 ) {
@@ -35,20 +35,23 @@ fun CodeEditor(
     var localSearchQuery by remember { mutableStateOf(searchQuery) }
     var currentMatchIndex by remember { mutableStateOf(0) }
     
-    val effectiveSearchQuery = if (isSearchActive) localSearchQuery else globalSearchQuery
+    val effectiveSearchRegex = if (isSearchActive && localSearchQuery.isNotEmpty()) {
+        Regex.escape(localSearchQuery).toRegex(RegexOption.IGNORE_CASE)
+    } else {
+        searchRegex
+    }
     
     val matches = remember(content.text, localSearchQuery) {
         if (localSearchQuery.isEmpty()) emptyList()
         else Regex.escape(localSearchQuery).toRegex(RegexOption.IGNORE_CASE).findAll(content.text).toList()
     }
     
-    val visualTransformation = remember(highlighter, effectiveSearchQuery, isSearchActive, currentMatchIndex, globalSelectedMatchRange) { 
-        if (isSearchActive) {
-            // For local search, map currentMatchIndex to an IntRange
+    val visualTransformation = remember(highlighter, effectiveSearchRegex, isSearchActive, currentMatchIndex, globalSelectedMatchRange) { 
+        if (isSearchActive && localSearchQuery.isNotEmpty()) {
             val range = matches.getOrNull(currentMatchIndex)?.range
-            SyntaxVisualTransformation(highlighter, effectiveSearchQuery, range) 
+            EditorVisualTransformation(highlighter, effectiveSearchRegex, range) 
         } else {
-            SyntaxVisualTransformation(highlighter, effectiveSearchQuery, globalSelectedMatchRange)
+            EditorVisualTransformation(highlighter, effectiveSearchRegex, globalSelectedMatchRange)
         }
     }
     

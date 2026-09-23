@@ -19,6 +19,13 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
     private val _projectName = MutableStateFlow("No Project")
     val projectName: StateFlow<String> = _projectName.asStateFlow()
 
+    private val _selectedNode = MutableStateFlow<FileNode?>(null)
+    val selectedNode: StateFlow<FileNode?> = _selectedNode.asStateFlow()
+
+    fun selectNode(node: FileNode?) {
+        _selectedNode.value = node
+    }
+
     fun setWorkspaceRoot(uriString: String) {
         repository.setWorkspaceRoot(uriString)
         loadProject()
@@ -72,6 +79,7 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
             } else {
                 // Expand (lazy load)
                 val children = repository.getChildren(node.file)
+                children.forEach { it.level = node.level + 1 }
                 node.children = children
                 node.isExpanded = true
                 val newList = _fileTree.value.toMutableList()
@@ -214,12 +222,13 @@ class FileExplorerViewModel(private val repository: FileRepository) : ViewModel(
         }
     }
 
-    private fun buildFlatTree(currentLevel: List<FileNode>): List<FileNode> {
+    private fun buildFlatTree(currentLevel: List<FileNode>, level: Int = 0): List<FileNode> {
         val result = mutableListOf<FileNode>()
         for (node in currentLevel) {
+            node.level = level
             result.add(node)
             if (node.isExpanded && node.children != null) {
-                result.addAll(buildFlatTree(node.children!!))
+                result.addAll(buildFlatTree(node.children!!, level + 1))
             }
         }
         return result

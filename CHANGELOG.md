@@ -5,7 +5,72 @@ All notable changes to OraIDE are documented here.
 ## [UNRELEASED]
 
 - Compilers coming soon!
-- Compilers for C, C++, Java and Python to be implemented in v0.4.x
+- Compilers for C, C++, C#, Java, and Python are planned for v0.4.x
+- v0.3.2 will focus on codebase cleanup, refactoring, and optimization without changing existing functionality.
+
+## [0.3.1] - 2026-09-23
+
+### Added
+
+- Proper file and folder hierarchy visualization in the Explorer
+- Depth-based indentation for nested files and folders
+- File selection states in the Explorer
+- File-type icons for common source and project files
+- Improved folder expansion and hierarchy navigation
+- Mouse and pointer interaction support
+- Middle-click tab closing
+- Right-click interaction for Explorer and tab elements
+- Double-click interaction support
+- Centralized command and keyboard shortcut system
+- Keyboard shortcuts for common editor and tab actions
+- Keyboard Shortcuts section in Settings
+- Unified SearchEngine architecture
+- Match Case search option
+- Whole Word search option
+- Regular Expression search option
+- Match counting and result distribution
+- Independent search highlighting
+- Search functionality across file, folder, and project scopes
+- Internal change tracking through `CHANGES.md`
+
+### Changed
+
+- Improved Explorer architecture and file-tree handling
+- Improved editor and tab interaction
+- Improved keyboard input handling
+- Improved mouse and touch input handling
+- Centralized common OraIDE actions through `ActionManager`
+- Search and matching logic separated from editor UI components
+- Search highlighting separated from the base syntax highlighting system
+- Improved Search workspace behavior
+- Improved Settings integration for keyboard shortcuts
+- Improved interaction consistency across the IDE
+
+### Internal Development
+
+- Introduced `ActionManager` and `OraCommand` for centralized IDE actions
+- Introduced `ShortcutDefinition` for centralized shortcut definitions
+- Introduced `SearchEngine` and `SearchOptions`
+- Added internal file-tree depth tracking through `FileNode`
+- Added independent editor search highlighting
+- Continued architectural cleanup of the Explorer, Search, Editor, and input systems
+- Added `CHANGES.md` to maintain a detailed record of implementation changes
+- v0.3.1 was developed as the machinery and interaction milestone following the UI-focused v0.3.0 release
+
+### Known Issues
+
+- Some file explorer interactions may still have small clickable regions
+- Some project management and workspace edge cases remain under development
+- Additional UI refinement and stability improvements are planned for future v0.3.x releases
+
+### Notes
+
+- Pre-alpha development release
+- v0.3.0 established the major IDE UI and workspace structure
+- v0.3.1 focuses on the underlying interaction, search, Explorer, and command machinery
+- No compiler or language toolchain functionality is included in v0.3.1
+- Compiler and terminal/toolchain development is planned for v0.4.x.
+- I dare the reader to touch some grass.
 
 ## [0.3.0] - 2026-09-21
 

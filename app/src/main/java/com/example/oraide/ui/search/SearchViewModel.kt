@@ -30,9 +30,19 @@ class SearchViewModel(private val repository: FileRepository) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _searchOptions = MutableStateFlow(SearchOptions())
+    val searchOptions: StateFlow<SearchOptions> = _searchOptions.asStateFlow()
+    
+    private val _searchRegex = MutableStateFlow<Regex?>(null)
+    val searchRegex: StateFlow<Regex?> = _searchRegex.asStateFlow()
     
     private val _selectedMatch = MutableStateFlow<SearchResult?>(null)
     val selectedMatch: StateFlow<SearchResult?> = _selectedMatch.asStateFlow()
+
+    fun updateSearchOptions(options: SearchOptions) {
+        _searchOptions.value = options
+    }
 
     fun setSelectedMatch(match: SearchResult?) {
         _selectedMatch.value = match
@@ -49,13 +59,23 @@ class SearchViewModel(private val repository: FileRepository) : ViewModel() {
         _selectedMatch.value = null
         if (query.isBlank()) {
             _searchResults.value = emptyList()
+            _searchRegex.value = null
             return
         }
 
         viewModelScope.launch {
             _isSearching.value = true
             val results = mutableListOf<SearchResult>()
-            val regex = Regex(Regex.escape(query), RegexOption.IGNORE_CASE)
+            
+            val regex = try {
+                SearchEngine.compilePattern(query, _searchOptions.value)
+            } catch (e: Exception) {
+                // If regex is invalid, abort search
+                _isSearching.value = false
+                return@launch
+            }
+            
+            _searchRegex.value = regex
 
             withContext(Dispatchers.IO) {
                 when (scope) {
@@ -96,7 +116,13 @@ class SearchViewModel(private val repository: FileRepository) : ViewModel() {
 
         viewModelScope.launch {
             _isSearching.value = true
-            val regex = Regex(Regex.escape(searchQuery), RegexOption.IGNORE_CASE)
+            
+            val regex = try {
+                SearchEngine.compilePattern(searchQuery, _searchOptions.value)
+            } catch (e: Exception) {
+                _isSearching.value = false
+                return@launch
+            }
 
             withContext(Dispatchers.IO) {
                 when (scope) {

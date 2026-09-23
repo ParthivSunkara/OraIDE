@@ -25,7 +25,7 @@ fun EditorArea(
     isSearchActive: Boolean,
     onSearchClosed: () -> Unit,
     settingsManager: SettingsManager,
-    globalSearchQuery: String = "",
+    searchRegex: Regex? = null,
     globalSelectedMatchRange: IntRange? = null,
     modifier: Modifier = Modifier
 ) {
@@ -63,7 +63,7 @@ fun EditorArea(
                         isSearchActive = isSearchActive,
                         searchQuery = "",
                         onSearchClosed = onSearchClosed,
-                        globalSearchQuery = globalSearchQuery,
+                        searchRegex = searchRegex,
                         globalSelectedMatchRange = globalSelectedMatchRange,
                         modifier = Modifier.weight(1f)
                     )

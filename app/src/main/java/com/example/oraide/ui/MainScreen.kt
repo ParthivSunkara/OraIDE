@@ -28,6 +28,11 @@ import com.example.oraide.ui.editor.EditorViewModel
 import com.example.oraide.ui.explorer.FileExplorer
 import com.example.oraide.ui.explorer.FileExplorerViewModel
 import com.example.oraide.ui.settings.SettingsScreen
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.focusable
 
 @Composable
 fun MainScreen(
@@ -77,7 +82,58 @@ fun MainScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+    val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .safeDrawingPadding()
+        .focusRequester(focusRequester)
+        .focusable()
+        .onPreviewKeyEvent { event ->
+            com.example.oraide.ActionManager.handleKeyEvent(event) { command ->
+                when (command) {
+                    com.example.oraide.OraCommand.SAVE -> {
+                        if (activeTabIndex != -1) editorViewModel.saveFile(activeTabIndex)
+                        true
+                    }
+                    com.example.oraide.OraCommand.SAVE_AS -> {
+                        if (activeTab != null) saveAsLauncher.launch(activeTab.file.name ?: "Untitled.txt")
+                        true
+                    }
+                    com.example.oraide.OraCommand.CLOSE_TAB -> {
+                        if (activeTabIndex != -1) editorViewModel.closeTab(activeTabIndex)
+                        true
+                    }
+                    com.example.oraide.OraCommand.CLOSE_ALL_TABS -> {
+                        editorViewModel.clearAllTabs()
+                        true
+                    }
+                    com.example.oraide.OraCommand.FIND -> {
+                        mainViewModel.setSearchActive(true)
+                        true
+                    }
+                    com.example.oraide.OraCommand.FIND_REPLACE -> {
+                        mainViewModel.setSearchActive(true)
+                        // Trigger replace mode in UI via ViewModel (optional if supported)
+                        true
+                    }
+                    com.example.oraide.OraCommand.NEXT_TAB -> {
+                        if (tabs.isNotEmpty()) editorViewModel.switchTab((activeTabIndex + 1) % tabs.size)
+                        true
+                    }
+                    com.example.oraide.OraCommand.PREV_TAB -> {
+                        if (tabs.isNotEmpty()) editorViewModel.switchTab(if (activeTabIndex - 1 < 0) tabs.size - 1 else activeTabIndex - 1)
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }
+    ) {
         com.example.oraide.ui.components.GlobalAppBar(
             onSaveClick = {
                 if (activeTabIndex != -1) {
@@ -131,7 +187,7 @@ fun MainScreen(
                         }
                     }
                 } else {
-                    val activeDirectory by explorerViewModel.activeDirectory.collectAsState()
+                    val selectedNode by explorerViewModel.selectedNode.collectAsState()
                     var nodeToRename by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<com.example.oraide.data.FileNode?>(null) }
                     var nodeToDelete by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<com.example.oraide.data.FileNode?>(null) }
                     var selectedNodeForMenu by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<com.example.oraide.data.FileNode?>(null) }
@@ -139,8 +195,9 @@ fun MainScreen(
                     FileExplorer(
                         fileTree = fileTree,
                         projectName = projectName,
-                        activeDirectory = activeDirectory,
+                        selectedNode = selectedNode,
                         onNodeClicked = { node ->
+                            explorerViewModel.selectNode(node)
                             if (node.isDirectory) {
                                 explorerViewModel.toggleFolder(node)
                             } else {
@@ -258,7 +315,7 @@ fun MainScreen(
             // Editor & Bottom Panel Area
             if (activeSidebarItem != ActivityBarItem.SETTINGS) {
                 Column(modifier = Modifier.weight(1f).fillMaxSize()) {
-                    val globalSearchQuery by searchViewModel.searchQuery.collectAsState()
+                    val globalSearchRegex by searchViewModel.searchRegex.collectAsState()
                     val globalSelectedMatch by searchViewModel.selectedMatch.collectAsState()
                     val globalMatchRange = globalSelectedMatch?.let {
                         if (it.file.uri == activeTab?.file?.uri) {
@@ -275,7 +332,7 @@ fun MainScreen(
                         isSearchActive = isSearchActive,
                         onSearchClosed = { mainViewModel.setSearchActive(false) },
                         settingsManager = settingsManager,
-                        globalSearchQuery = globalSearchQuery,
+                        searchRegex = globalSearchRegex,
                         globalSelectedMatchRange = globalMatchRange,
                         modifier = Modifier.weight(1f)
                     )

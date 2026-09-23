@@ -25,7 +25,18 @@ enum class AppIcon {
     CHEVRON_DOWN,
     CHEVRON_RIGHT,
     NEW_FILE,
-    NEW_FOLDER
+    NEW_FOLDER,
+    
+    // File Types
+    FILE_C,
+    FILE_CPP,
+    FILE_KOTLIN,
+    FILE_JAVA,
+    FILE_PYTHON,
+    FILE_JSON,
+    FILE_XML,
+    FILE_MD,
+    FILE_IMAGE
 }
 
 @Composable
@@ -56,6 +67,13 @@ fun AppIconView(
         AppIcon.FILE -> Icons.Rounded.Description
         AppIcon.NEW_FILE -> Icons.Rounded.Add
         AppIcon.NEW_FOLDER -> Icons.Rounded.CreateNewFolder
+        
+        AppIcon.FILE_C, AppIcon.FILE_CPP, AppIcon.FILE_KOTLIN, AppIcon.FILE_JAVA -> Icons.Rounded.Code
+        AppIcon.FILE_PYTHON -> Icons.Rounded.DataObject
+        AppIcon.FILE_JSON -> Icons.Rounded.DataObject
+        AppIcon.FILE_XML -> Icons.Rounded.Code
+        AppIcon.FILE_MD -> Icons.Rounded.FormatAlignLeft
+        AppIcon.FILE_IMAGE -> Icons.Rounded.Image
     }
 
     Icon(

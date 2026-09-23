@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.Color
 import com.example.oraide.theme.*
 
 interface SyntaxHighlighter {
-    fun highlight(text: String, searchQuery: String = "", globalSelectedMatchRange: IntRange? = null): AnnotatedString
+    fun highlight(text: String): AnnotatedString
 }
 
 class RegexSyntaxHighlighter : SyntaxHighlighter {
@@ -31,7 +31,7 @@ class RegexSyntaxHighlighter : SyntaxHighlighter {
     private val numberRegex = "\\b\\d+\\b".toRegex()
     private val commentRegex = "//.*".toRegex()
 
-    override fun highlight(text: String, searchQuery: String, globalSelectedMatchRange: IntRange?): AnnotatedString {
+    override fun highlight(text: String): AnnotatedString {
         return buildAnnotatedString {
             append(text)
             
@@ -57,30 +57,32 @@ class RegexSyntaxHighlighter : SyntaxHighlighter {
             commentRegex.findAll(text).forEach { match ->
                 addStyle(SpanStyle(color = oraideComment), match.range.first, match.range.last + 1)
             }
-
-            // Search Highlights
-            if (searchQuery.isNotEmpty()) {
-                val matches = Regex.escape(searchQuery).toRegex(RegexOption.IGNORE_CASE).findAll(text).toList()
-                matches.forEach { match ->
-                    val isCurrent = globalSelectedMatchRange != null && match.range == globalSelectedMatchRange
-                    val bgColor = if (isCurrent) Color(0xFFFFD54F) else Color(0x66FFD54F)
-                    val fgColor = if (isCurrent) Color.Black else Color.Unspecified
-                    addStyle(SpanStyle(background = bgColor, color = fgColor), match.range.first, match.range.last + 1)
-                }
-            }
         }
     }
 }
 
-class SyntaxVisualTransformation(
+class EditorVisualTransformation(
     private val highlighter: SyntaxHighlighter,
-    private val searchQuery: String = "",
+    private val searchRegex: Regex? = null,
     private val globalSelectedMatchRange: IntRange? = null
 ) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
-        return TransformedText(
-            highlighter.highlight(text.text, searchQuery, globalSelectedMatchRange),
-            OffsetMapping.Identity
-        )
+        val syntaxHighlighted = highlighter.highlight(text.text)
+        
+        val finalHighlighted = if (searchRegex != null) {
+            val builder = androidx.compose.ui.text.AnnotatedString.Builder(syntaxHighlighted)
+            val matches = searchRegex.findAll(text.text).toList()
+            matches.forEach { match ->
+                val isCurrent = globalSelectedMatchRange != null && match.range == globalSelectedMatchRange
+                val bgColor = if (isCurrent) Color(0xFFFFD54F) else Color(0x66FFD54F)
+                val fgColor = if (isCurrent) Color.Black else Color.Unspecified
+                builder.addStyle(SpanStyle(background = bgColor, color = fgColor), match.range.first, match.range.last + 1)
+            }
+            builder.toAnnotatedString()
+        } else {
+            syntaxHighlighted
+        }
+
+        return TransformedText(finalHighlighted, OffsetMapping.Identity)
     }
 }

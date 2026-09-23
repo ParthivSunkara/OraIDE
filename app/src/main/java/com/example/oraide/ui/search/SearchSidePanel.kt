@@ -148,6 +148,28 @@ fun SearchSidePanel(
             )
         }
         
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Search Options
+        val options by searchViewModel.searchOptions.collectAsState()
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = options.matchCase,
+                onClick = { searchViewModel.updateSearchOptions(options.copy(matchCase = !options.matchCase)) },
+                label = { Text("Aa", fontSize = 12.sp) } // Case Sensitive
+            )
+            FilterChip(
+                selected = options.wholeWord,
+                onClick = { searchViewModel.updateSearchOptions(options.copy(wholeWord = !options.wholeWord)) },
+                label = { Text("\\b", fontSize = 12.sp) } // Whole Word
+            )
+            FilterChip(
+                selected = options.useRegex,
+                onClick = { searchViewModel.updateSearchOptions(options.copy(useRegex = !options.useRegex)) },
+                label = { Text(".*", fontSize = 12.sp) } // Regex
+            )
+        }
+        
         Spacer(modifier = Modifier.height(16.dp))
         
         Button(
@@ -166,6 +188,7 @@ fun SearchSidePanel(
         }
 
         if (searchResults.isNotEmpty()) {
+            Text("${searchResults.size} matches in ${searchResults.map { it.file.uri }.distinct().size} files", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 8.dp))
             val resultsByFile = searchResults.groupBy { it.file }
             
             LazyColumn(modifier = Modifier.weight(1f)) {

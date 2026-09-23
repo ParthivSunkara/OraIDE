@@ -72,6 +72,29 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        Text("Keyboard Shortcuts", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        com.example.oraide.ActionManager.shortcuts.forEach { shortcut ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(shortcut.description, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+                Text(
+                    text = shortcut.shortcutText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceVariant, shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    fontSize = 12.sp,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+
         Button(
             onClick = { settingsManager.resetToDefaults() },
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)
@@ -91,7 +114,7 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(32.dp))
         
         Text(
-            text = "Version 0.3.0",
+            text = "Version 0.3.1",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 12.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally)

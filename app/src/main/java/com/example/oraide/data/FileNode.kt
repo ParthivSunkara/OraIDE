@@ -8,7 +8,8 @@ data class FileNode(
     val isDirectory: Boolean = file.isDirectory,
     val path: String = file.uri.toString(),
     var children: List<FileNode>? = null, // null means not loaded yet (lazy loading)
-    var isExpanded: Boolean = false
+    var isExpanded: Boolean = false,
+    var level: Int = 0 // Represents the nesting depth in the Explorer tree
 ) {
     val extension: String
         get() = name.substringAfterLast('.', "")

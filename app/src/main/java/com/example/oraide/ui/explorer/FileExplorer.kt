@@ -16,12 +16,15 @@ import androidx.compose.ui.unit.sp
 import com.example.oraide.data.FileNode
 import com.example.oraide.ui.components.AppIcon
 import com.example.oraide.ui.components.AppIconView
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.isSecondaryPressed
 
 @Composable
 fun FileExplorer(
     fileTree: List<FileNode>,
     projectName: String,
-    activeDirectory: FileNode?,
+    selectedNode: FileNode?,
     onNodeClicked: (FileNode) -> Unit,
     onNodeLongClicked: (FileNode) -> Unit,
     onCreateFile: (String, FileNode?) -> Unit,
@@ -88,8 +91,8 @@ fun FileExplorer(
             items(fileTree, key = { it.path }) { node ->
                 FileNodeItem(
                     node = node,
-                    isActive = node == activeDirectory,
-                    level = calculateDepth(node, fileTree), 
+                    isActive = node == selectedNode,
+                    level = node.level, 
                     onClick = { onNodeClicked(node) },
                     onLongClick = { onNodeLongClicked(node) },
                     onNewFile = { newFileDialogTarget = node; isNewFileDialogOpen = true },
@@ -122,18 +125,7 @@ fun FileExplorer(
     }
 }
 
-private fun calculateDepth(node: FileNode, tree: List<FileNode>): Int {
-    // For V0.2.1 simplicity in flat tree
-    val rootPathLength = tree.firstOrNull()?.file?.uri?.toString()?.length ?: 0
-    // Try to guess depth by counting slashes or URL encoded slashes in uri string after removing root prefix
-    val pathStr = node.path
-    if (pathStr.length <= rootPathLength) return 0
-    val remainder = pathStr.substring(rootPathLength)
-    // DocumentFile uris are complex. A better way would be tracking depth in FileNode.
-    // For now, let's assume flat tree nodes aren't correctly indented unless we fix FileNode depth.
-    // To fix this cleanly, let's just use a dummy depth 0 and fix it later if needed.
-    return 0
-}
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -153,12 +145,29 @@ fun FileNodeItem(
         modifier = Modifier
             .fillMaxWidth()
             .background(bgColor)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        if (event.type == androidx.compose.ui.input.pointer.PointerEventType.Press) {
+                            if (event.buttons.isSecondaryPressed) {
+                                onLongClick()
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    }
+                }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { onClick() },
+                    onDoubleTap = { onClick() }, // Open file or expand
+                    onLongPress = { onLongClick() }
+                )
+            }
             .padding(start = (16 + level * 16).dp, top = 4.dp, bottom = 4.dp, end = 16.dp)
     ) {
+        val iconData = getFileIcon(node)
         if (node.isDirectory) {
             AppIconView(
                 icon = if (node.isExpanded) AppIcon.CHEVRON_DOWN else AppIcon.CHEVRON_RIGHT,
@@ -167,17 +176,17 @@ fun FileNodeItem(
                 modifier = Modifier.size(16.dp)
             )
             AppIconView(
-                icon = AppIcon.EXPLORER,
+                icon = iconData.icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = iconData.color,
                 modifier = Modifier.size(16.dp).padding(start = 2.dp)
             )
         } else {
             Spacer(modifier = Modifier.width(16.dp))
             AppIconView(
-                icon = AppIcon.FILE,
+                icon = iconData.icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = iconData.color,
                 modifier = Modifier.size(16.dp).padding(start = 2.dp)
             )
         }
@@ -198,5 +207,28 @@ fun FileNodeItem(
                 }
             }
         }
+    }
+}
+
+data class FileIconData(val icon: AppIcon, val color: androidx.compose.ui.graphics.Color)
+
+@Composable
+fun getFileIcon(node: FileNode): FileIconData {
+    val defaultColor = MaterialTheme.colorScheme.onSurfaceVariant
+    if (node.isDirectory) {
+        return FileIconData(if (node.isExpanded) AppIcon.FOLDER_OPEN else AppIcon.EXPLORER, defaultColor)
+    }
+    
+    return when (node.extension.lowercase()) {
+        "c" -> FileIconData(AppIcon.FILE_C, androidx.compose.ui.graphics.Color(0xFF555555))
+        "cpp", "cxx", "h", "hpp" -> FileIconData(AppIcon.FILE_CPP, androidx.compose.ui.graphics.Color(0xFF00599C))
+        "kt", "kts" -> FileIconData(AppIcon.FILE_KOTLIN, androidx.compose.ui.graphics.Color(0xFF7F52FF))
+        "java" -> FileIconData(AppIcon.FILE_JAVA, androidx.compose.ui.graphics.Color(0xFFB07219))
+        "py" -> FileIconData(AppIcon.FILE_PYTHON, androidx.compose.ui.graphics.Color(0xFF3572A5))
+        "json" -> FileIconData(AppIcon.FILE_JSON, androidx.compose.ui.graphics.Color(0xFFF2C94C))
+        "xml" -> FileIconData(AppIcon.FILE_XML, androidx.compose.ui.graphics.Color(0xFF0060AC))
+        "md" -> FileIconData(AppIcon.FILE_MD, androidx.compose.ui.graphics.Color(0xFF42A5F5))
+        "png", "jpg", "jpeg", "gif", "webp" -> FileIconData(AppIcon.FILE_IMAGE, androidx.compose.ui.graphics.Color(0xFF4CAF50))
+        else -> FileIconData(AppIcon.FILE, defaultColor)
     }
 }
