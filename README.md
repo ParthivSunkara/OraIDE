@@ -3,17 +3,22 @@
 **A tablet-first code editor and development environment for Android.**
 
 OraIDE is an open-source Android application designed from the ground up for coding on tablets, with a touch-friendly interface inspired by modern desktop code editors.
-This application also supports Android phones.
 
-The goal is simple, **to bring a proper development environment to Android tablets instead of treating them like oversized phones.**
+The application also supports Android phones.
+
+The goal is simple: **to bring a proper development environment to Android tablets instead of treating them like oversized phones.**
 
 ## Current Status
 
-**Version:** 0.2.x
-**Status:** Early development / prototype
+**Version:** 0.3.1  
+**Status:** Pre-alpha  
 **Platform:** Android Tablets and Phones
 
-OraIDE is currently focused on building a polished code-editing experience. Advanced IDE functionality such as compilation, debugging, Git integration, and language servers is planned for future versions.
+OraIDE is currently focused on building the foundation of a complete development environment for Android.
+
+The v0.3.x development cycle focuses on establishing the IDE workspace, editor interaction, project management, file navigation, search, keyboard and mouse support, and the underlying architecture required for future compiler and toolchain integration.
+
+Compilers, terminal functionality, debugging, Git integration, language servers, and other advanced development features are planned for future versions.
 
 ## License
 
@@ -29,12 +34,16 @@ OraIDE is currently focused on building a polished code-editing experience. Adva
 * Line numbers
 * Syntax highlighting
 * Search within files
+* Find and Replace
 * Undo / Redo
 * Auto-indentation
 * Automatic bracket and quote completion
 * Current-line highlighting
 * Scrollable editor
 * Monospace typography
+* Unsaved changes indicators
+* Save As
+* Improved tab management
 
 ### File Explorer
 
@@ -46,6 +55,28 @@ OraIDE is currently focused on building a polished code-editing experience. Adva
 * File and folder renaming
 * Lazy directory loading
 * Multiple projects
+* Project switching
+* Recent projects
+* File and folder hierarchy visualization
+* Depth-based indentation
+* File selection
+* File-type icons
+* Expandable folder hierarchy
+
+### Search
+
+* Dedicated Search workspace
+* Find
+* Find and Replace
+* File search
+* Folder search
+* Project search
+* Match Case
+* Whole Word
+* Regular Expression search
+* Match counting
+* Search result distribution
+* Search result highlighting
 
 ### Interface
 
@@ -56,6 +87,36 @@ OraIDE is currently focused on building a polished code-editing experience. Adva
 * Customizable theme colours
 * Material 3
 * Jetpack Compose
+* Global App Bar
+* Activity Bar
+* Status Bar
+* Bottom Panel
+* IDE-style workspace layout
+* UI Scale customization
+
+### Input
+
+* Touch interaction
+* Keyboard shortcuts
+* Mouse interaction
+* Right-click interaction
+* Middle-click tab closing
+* Double-click interaction
+* Centralized command/action system
+
+### Workspaces
+
+* Explorer workspace
+* Search workspace
+* Git workspace
+* Run workspace
+* Terminal workspace
+* Extensions workspace
+* Settings workspace
+* Problems panel
+* Output panel
+
+> Some workspaces currently serve as foundations or placeholders for functionality planned for future releases.
 
 ## Architecture
 
@@ -68,16 +129,30 @@ OraIDE is built using:
 * **Repository pattern**
 * **Kotlin Coroutines**
 
-The editor and syntax-highlighting systems are designed to remain modular so that more advanced parsing technologies can be introduced later without requiring a complete rewrite of the editor.
+The application uses centralized systems for common IDE actions and search functionality.
+
+Key architectural components include:
+
+* `ActionManager`
+* `OraCommand`
+* `ShortcutDefinition`
+* `SearchEngine`
+* `SearchOptions`
+* `FileNode`
+
+The editor, search, file-management, and interaction systems are designed to remain modular so that more advanced functionality can be introduced without requiring a complete rewrite of the existing application.
 
 ## Planned Features
 
-Future versions may introduce:
+Future versions are planned to introduce:
 
-* Python execution
-* C/C++ compilation
-* Java compilation
 * Integrated terminal
+* C compilation and execution
+* C++ compilation and execution
+* C# compilation and execution
+* Java compilation and execution
+* Python execution
+* Cross-language toolchain support
 * Git integration
 * Tree-sitter-based parsing
 * Language Server Protocol support
@@ -85,6 +160,8 @@ Future versions may introduce:
 * Diagnostics
 * Debugging
 * Plugin/extension support
+
+The v0.4.x development cycle is planned to begin the implementation of compiler and terminal/toolchain functionality.
 
 These features are intentionally not part of the current release.
 
@@ -94,11 +171,13 @@ Most development environments are designed around a desktop workflow:
 
 > Keyboard + mouse + large monitor
 
-OraIDE takes the opposite approach:
+OraIDE takes a different approach:
 
-> **Android tablet + touchscreen + optional keyboard**
+> **Android tablet + touchscreen + optional keyboard and mouse**
 
-The interface is designed to remain usable with touch input while taking advantage of the larger displays and hardware available on modern Android tablets, however it also is intended to work well with a mouse and keyboard.
+The interface is designed to remain usable with touch input while taking advantage of the larger displays and hardware available on modern Android tablets.
+
+At the same time, OraIDE supports traditional keyboard and mouse interaction for users who want a more desktop-like workflow.
 
 ## Development
 
@@ -107,6 +186,7 @@ OraIDE is a vibe-coded project.
 The initial prototype was built with the help of **Google Antigravity**, using AI-assisted development. The product direction, architecture, feature requirements, UI design, testing, and iteration are directed by the developer.
 
 The project is also an experiment in how far AI-assisted development can take a genuinely usable Android application.
+
 AI tools used during development include **Google Antigravity with Gemini 3.1 Pro (High)**.
 
 ### Building
@@ -115,25 +195,24 @@ Clone the repository and open the project in Android Studio or another compatibl
 
 Build the debug APK with:
 
-```bash
+
 ./gradlew assembleDebug
-```
+
 
 On Windows:
 
-```powershell
+(powershell)
 .\gradlew assembleDebug
-```
+
 
 The generated debug APK can be found under:
 
-```text
+
 app/build/outputs/apk/debug/
-```
+
 
 ## Project Structure
 
-```text
 OraIDE/
 ├── app/
 │   └── src/
@@ -146,7 +225,6 @@ OraIDE/
 ├── gradle.properties
 ├── gradlew
 └── gradlew.bat
-```
 
 
 ## Project
