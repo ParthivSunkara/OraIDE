@@ -22,37 +22,17 @@ fun CodeEditor(
     content: TextFieldValue,
     onContentChanged: (TextFieldValue) -> Unit,
     settingsManager: SettingsManager,
-    isSearchActive: Boolean,
-    searchQuery: String, // from local search panel
-    onSearchClosed: () -> Unit,
+    
+    
+    
     searchRegex: Regex? = null,
     globalSelectedMatchRange: IntRange? = null,
     modifier: Modifier = Modifier
 ) {
     val highlighter = remember { RegexSyntaxHighlighter() }
     
-    // Search state
-    var localSearchQuery by remember { mutableStateOf(searchQuery) }
-    var currentMatchIndex by remember { mutableStateOf(0) }
-    
-    val effectiveSearchRegex = if (isSearchActive && localSearchQuery.isNotEmpty()) {
-        Regex.escape(localSearchQuery).toRegex(RegexOption.IGNORE_CASE)
-    } else {
-        searchRegex
-    }
-    
-    val matches = remember(content.text, localSearchQuery) {
-        if (localSearchQuery.isEmpty()) emptyList()
-        else Regex.escape(localSearchQuery).toRegex(RegexOption.IGNORE_CASE).findAll(content.text).toList()
-    }
-    
-    val visualTransformation = remember(highlighter, effectiveSearchRegex, isSearchActive, currentMatchIndex, globalSelectedMatchRange) { 
-        if (isSearchActive && localSearchQuery.isNotEmpty()) {
-            val range = matches.getOrNull(currentMatchIndex)?.range
-            EditorVisualTransformation(highlighter, effectiveSearchRegex, range) 
-        } else {
-            EditorVisualTransformation(highlighter, effectiveSearchRegex, globalSelectedMatchRange)
-        }
+    val visualTransformation = remember(highlighter, searchRegex, globalSelectedMatchRange) { 
+        EditorVisualTransformation(highlighter, searchRegex, globalSelectedMatchRange)
     }
     
     val textStyle = TextStyle(
@@ -139,32 +119,6 @@ fun CodeEditor(
             }
         }
         
-        if (isSearchActive) {
-            SearchPanel(
-                query = localSearchQuery,
-                onQueryChange = { 
-                    localSearchQuery = it
-                    currentMatchIndex = 0
-                },
-                matchCount = matches.size,
-                currentMatchIndex = currentMatchIndex,
-                onNext = {
-                    if (matches.isNotEmpty()) {
-                        currentMatchIndex = (currentMatchIndex + 1) % matches.size
-                        val match = matches[currentMatchIndex]
-                        onContentChanged(content.copy(selection = TextRange(match.range.first, match.range.last + 1)))
-                    }
-                },
-                onPrevious = {
-                    if (matches.isNotEmpty()) {
-                        currentMatchIndex = if (currentMatchIndex - 1 < 0) matches.size - 1 else currentMatchIndex - 1
-                        val match = matches[currentMatchIndex]
-                        onContentChanged(content.copy(selection = TextRange(match.range.first, match.range.last + 1)))
-                    }
-                },
-                onClose = onSearchClosed,
-                modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd).padding(16.dp)
-            )
-        }
+
     }
 }

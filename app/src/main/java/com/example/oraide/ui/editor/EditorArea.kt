@@ -22,8 +22,6 @@ fun EditorArea(
     onTabSelected: (Int) -> Unit,
     onTabClosed: (Int) -> Unit,
     onContentChanged: (Int, TextFieldValue) -> Unit,
-    isSearchActive: Boolean,
-    onSearchClosed: () -> Unit,
     settingsManager: SettingsManager,
     searchRegex: Regex? = null,
     globalSelectedMatchRange: IntRange? = null,
@@ -60,9 +58,6 @@ fun EditorArea(
                         content = activeTab.content,
                         onContentChanged = { onContentChanged(activeIndex, it) },
                         settingsManager = settingsManager,
-                        isSearchActive = isSearchActive,
-                        searchQuery = "",
-                        onSearchClosed = onSearchClosed,
                         searchRegex = searchRegex,
                         globalSelectedMatchRange = globalSelectedMatchRange,
                         modifier = Modifier.weight(1f)

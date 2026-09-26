@@ -24,16 +24,8 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private val _isSearchActive = MutableStateFlow(false)
-    val isSearchActive: StateFlow<Boolean> = _isSearchActive.asStateFlow()
-
-    fun toggleSearch() {
-        _isSearchActive.value = !_isSearchActive.value
-    }
-
-    fun setSearchActive(active: Boolean) {
-        _isSearchActive.value = active
-    }
+    
+    fun setActiveSidebarItem(item: ActivityBarItem?) { _activeSidebarItem.value = item }
 
     fun setBottomPanelVisible(visible: Boolean) {
         _isBottomPanelVisible.value = visible

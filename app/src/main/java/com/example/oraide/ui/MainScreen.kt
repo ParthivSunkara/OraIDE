@@ -45,7 +45,7 @@ fun MainScreen(
 ) {
     val activeSidebarItem by mainViewModel.activeSidebarItem.collectAsState()
     val isBottomPanelVisible by mainViewModel.isBottomPanelVisible.collectAsState()
-    val isSearchActive by mainViewModel.isSearchActive.collectAsState()
+    
     
     val fileTree by explorerViewModel.fileTree.collectAsState()
     val projectName by explorerViewModel.projectName.collectAsState()
@@ -113,11 +113,11 @@ fun MainScreen(
                         true
                     }
                     com.example.oraide.OraCommand.FIND -> {
-                        mainViewModel.setSearchActive(true)
+                        mainViewModel.setActiveSidebarItem(ActivityBarItem.SEARCH)
                         true
                     }
                     com.example.oraide.OraCommand.FIND_REPLACE -> {
-                        mainViewModel.setSearchActive(true)
+                        mainViewModel.setActiveSidebarItem(ActivityBarItem.SEARCH)
                         // Trigger replace mode in UI via ViewModel (optional if supported)
                         true
                     }
@@ -144,9 +144,6 @@ fun MainScreen(
                 if (activeTab != null) {
                     saveAsLauncher.launch(activeTab.file.name ?: "Untitled.txt")
                 }
-            },
-            onSearchClick = {
-                mainViewModel.toggleSearch()
             },
             onCloseAllTabsClick = { editorViewModel.clearAllTabs() },
             settingsManager = settingsManager
@@ -329,8 +326,8 @@ fun MainScreen(
                         onTabSelected = { editorViewModel.switchTab(it) },
                         onTabClosed = { editorViewModel.closeTab(it) },
                         onContentChanged = { index, content -> editorViewModel.updateContent(index, content) },
-                        isSearchActive = isSearchActive,
-                        onSearchClosed = { mainViewModel.setSearchActive(false) },
+                        
+                        
                         settingsManager = settingsManager,
                         searchRegex = globalSearchRegex,
                         globalSelectedMatchRange = globalMatchRange,

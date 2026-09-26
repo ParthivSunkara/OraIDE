@@ -6,7 +6,54 @@ All notable changes to OraIDE are documented here.
 
 - Compilers coming soon!
 - Compilers for C, C++, C#, Java, and Python are planned for v0.4.x
-- v0.3.2 will focus on codebase cleanup, refactoring, and optimization without changing existing functionality.
+
+## [0.3.2] - 2026-09-26
+
+### Removed
+
+- Removed unused diagnostic and SAF debugging files
+- Removed obsolete Navigation boilerplate and unused template screens
+- Removed unused hardcoded theme color constants
+- Removed legacy Find UI and its obsolete supporting code
+- Removed other confirmed-unused code and project remnants identified during the cleanup audit
+
+### Fixed
+
+- Fixed Whole Word search pattern generation
+- Fixed search result highlighting using incorrect line-relative character offsets
+- Fixed search highlighting architecture to use absolute text ranges
+- Fixed redundant search regex processing during editor rendering
+
+### Changed
+
+- Simplified and cleaned up the codebase
+- Consolidated redundant logic where applicable
+- Removed obsolete code left over from earlier OraIDE versions
+- Reduced unnecessary code and architectural clutter
+- Improved separation between search logic and editor rendering
+- Improved internal code organization without changing the intended user experience
+
+### Internal Development
+
+- Performed a comprehensive codebase cleanup audit
+- Verified unused files and components before removal
+- Preserved existing v0.3.1 functionality while refactoring internal implementation
+- Continued maintaining `CHANGES.md` as a detailed record of internal modifications
+- Reviewed Explorer, Search, Editor, ActionManager, project management, and input-handling systems for redundant or obsolete code
+
+### Known Issues
+
+- Some deeper architectural cleanup opportunities remain under review
+- Additional optimization and refactoring may be considered in future releases
+
+### Notes
+
+- Pre-alpha development release
+- v0.3.2 is primarily a cleanup, refinement, and maintenance release
+- No major user-facing features were intentionally introduced
+- Existing v0.3.1 functionality and UI were preserved
+- This release prepares the codebase for the larger terminal and compiler work planned for v0.4.x
+- HelpPpPp I aM sO hIgH oN AI CrEdItS
 
 ## [0.3.1] - 2026-09-23
 

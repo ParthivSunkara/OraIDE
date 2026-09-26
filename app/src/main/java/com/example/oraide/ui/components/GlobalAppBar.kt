@@ -20,7 +20,7 @@ import com.example.oraide.data.SettingsManager
 fun GlobalAppBar(
     onSaveClick: () -> Unit,
     onSaveAsClick: () -> Unit,
-    onSearchClick: () -> Unit,
+    
     onCloseAllTabsClick: () -> Unit,
     settingsManager: SettingsManager,
     modifier: Modifier = Modifier
@@ -72,11 +72,6 @@ fun GlobalAppBar(
                 icon = AppIcon.GIT,
                 contentDescription = "Git (Placeholder)",
                 onClick = { /* Future */ }
-            )
-            OutlinedToolbarIconButton(
-                icon = AppIcon.SEARCH,
-                contentDescription = "Search",
-                onClick = onSearchClick
             )
             
             Box {
